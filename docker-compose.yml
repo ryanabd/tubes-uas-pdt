@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  master:
+    image: mysql:8.0
+    container_name: mysql_master
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3306:3306"
+    networks:
+      - mysql-replication
+    volumes:
+      - master-data:/var/lib/mysql
+      - ./master-init:/docker-entrypoint-initdb.d
+
+  slave1:
+    image: mysql:8.0
+    container_name: mysql_slave1
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3307:3306"
+    networks:
+      - mysql-replication
+    volumes:
+      - slave1-data:/var/lib/mysql
+      - ./slave-init:/docker-entrypoint-initdb.d
+
+  slave2:
+    image: mysql:8.0
+    container_name: mysql_slave2
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3308:3306"
+    networks:
+      - mysql-replication
+    volumes:
+      - slave2-data:/var/lib/mysql
+      - ./slave-init:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:6.2
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - mysql-replication
+
+  mongo:
+    image: mongo:4.4
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - "27017:27017"
+    networks:
+      - mysql-replication
+    volumes:
+      - mongo-data:/data/db
+
+  php:
+    image: php:8.0-apache
+    container_name: php
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./dimsum:/var/www/html
+    networks:
+      - mysql-replication
+
+volumes:
+  master-data:
+  slave1-data:
+  slave2-data:
+  mongo-data:
+
+networks:
+  mysql-replication:
+    external: true
